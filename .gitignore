@@ -1,0 +1,34 @@
+# Node
+node_modules
+.next
+.turbo
+
+# Python
+__pycache__
+*.pyc
+.venv
+
+# Environment
+.env
+.env.local
+
+# IDE
+.vscode
+.idea
+
+# Mac
+.DS_Store
+
+# Logs
+logs
+*.log
+
+# Database
+*.sqlite3
+
+# Coverage
+coverage
+htmlcov
+
+# Docker
+*.pid
