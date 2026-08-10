@@ -4,11 +4,14 @@ import { FormEvent, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
-import { login } from "@/lib/auth/api";
+import { register } from "@/lib/auth/api";
 
-export default function LoginPage() {
+export default function RegisterPage() {
   const router = useRouter();
 
+  const [organizationName, setOrganizationName] =
+    useState("");
+  const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
@@ -24,7 +27,9 @@ export default function LoginPage() {
     setError("");
 
     try {
-      const response = await login({
+      const response = await register({
+        organization_name: organizationName,
+        full_name: fullName,
         email,
         password,
       });
@@ -39,7 +44,7 @@ export default function LoginPage() {
       setError(
         error instanceof Error
           ? error.message
-          : "Unable to sign in",
+          : "Unable to create account",
       );
     } finally {
       setLoading(false);
@@ -54,11 +59,11 @@ export default function LoginPage() {
       >
         <div>
           <h1 className="text-3xl font-bold">
-            Welcome back
+            Create your workspace
           </h1>
 
           <p className="mt-2 text-muted-foreground">
-            Sign in to your WhatsFlow workspace.
+            Set up WhatsFlow for your business.
           </p>
         </div>
 
@@ -67,6 +72,48 @@ export default function LoginPage() {
             {error}
           </div>
         )}
+
+        <div className="space-y-2">
+          <label
+            htmlFor="organizationName"
+            className="text-sm font-medium"
+          >
+            Business name
+          </label>
+
+          <input
+            id="organizationName"
+            type="text"
+            required
+            minLength={2}
+            value={organizationName}
+            onChange={(event) =>
+              setOrganizationName(event.target.value)
+            }
+            className="w-full rounded-md border p-3"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <label
+            htmlFor="fullName"
+            className="text-sm font-medium"
+          >
+            Your name
+          </label>
+
+          <input
+            id="fullName"
+            type="text"
+            required
+            minLength={2}
+            value={fullName}
+            onChange={(event) =>
+              setFullName(event.target.value)
+            }
+            className="w-full rounded-md border p-3"
+          />
+        </div>
 
         <div className="space-y-2">
           <label
@@ -100,12 +147,17 @@ export default function LoginPage() {
             id="password"
             type="password"
             required
+            minLength={8}
             value={password}
             onChange={(event) =>
               setPassword(event.target.value)
             }
             className="w-full rounded-md border p-3"
           />
+
+          <p className="text-xs text-muted-foreground">
+            At least 8 characters.
+          </p>
         </div>
 
         <button
@@ -113,16 +165,18 @@ export default function LoginPage() {
           disabled={loading}
           className="w-full rounded-md bg-black p-3 text-white disabled:opacity-50"
         >
-          {loading ? "Signing in..." : "Sign in"}
+          {loading
+            ? "Creating account..."
+            : "Create account"}
         </button>
 
         <p className="text-center text-sm text-muted-foreground">
-          Don&apos;t have an account?{" "}
+          Already have an account?{" "}
           <Link
-            href="/register"
+            href="/login"
             className="font-medium text-foreground underline"
           >
-            Create one
+            Sign in
           </Link>
         </p>
       </form>
