@@ -73,6 +73,36 @@ function isRealtimeEvent(value: unknown): value is RealtimeEvent {
   return false;
 }
 
+function getWebSocketUrl(): string | null {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+
+  if (!apiUrl) {
+    console.warn(
+      "[Realtime] NEXT_PUBLIC_API_URL is not configured",
+    );
+
+    return null;
+  }
+
+  try {
+    const url = new URL(apiUrl);
+
+    const protocol =
+      url.protocol === "https:" ? "wss:" : "ws:";
+
+    return `${protocol}//${url.host}${url.pathname.replace(
+      /\/$/,
+      "",
+    )}/realtime/ws`;
+  } catch {
+    console.warn(
+      "[Realtime] Invalid NEXT_PUBLIC_API_URL",
+    );
+
+    return null;
+  }
+}
+
 export function connectRealtime({
   onEvent,
   onDisconnect,
@@ -86,13 +116,14 @@ export function connectRealtime({
     return null;
   }
 
-  const protocol =
-    window.location.protocol === "https:"
-      ? "wss:"
-      : "ws:";
+  const websocketUrl = getWebSocketUrl();
+
+  if (!websocketUrl) {
+    return null;
+  }
 
   const socket = new WebSocket(
-    `${protocol}//${window.location.host}/api/v1/realtime/ws?token=${encodeURIComponent(token)}`,
+    `${websocketUrl}?token=${encodeURIComponent(token)}`,
   );
 
   let heartbeat:

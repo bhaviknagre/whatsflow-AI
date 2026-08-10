@@ -39,3 +39,4 @@ htmlcov
 # Local scratch / one-off scripts (see their own docstrings)
 whatsapp.txt
 apps/api/update_whatsapp_connection.py
+.vercel

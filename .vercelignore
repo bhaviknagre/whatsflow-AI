@@ -1,0 +1,20 @@
+# The web app is the only thing Vercel needs to deploy - exclude
+# the entire Python backend and all build/dependency artifacts,
+# which Vercel reinstalls and rebuilds fresh remotely anyway.
+
+apps/api
+
+node_modules
+apps/web/node_modules
+apps/web/.next
+.turbo
+apps/web/.turbo
+
+.venv
+__pycache__
+*.pyc
+.pytest_cache
+.mypy_cache
+.ruff_cache
+
+.git
