@@ -50,26 +50,46 @@ class Settings(BaseSettings):
     MINIO_SECRET_KEY: str = "minio123"
     MINIO_BUCKET: str = "whatsflow"
 
+    CORS_ORIGINS: str = "http://localhost:3000"
+
+    ENABLE_API_DOCS: bool = True
+
     @property
     def is_production(self) -> bool:
         return self.APP_ENV.lower() == "production"
 
+    @property
+    def cors_origins(self) -> list[str]:
+        return [
+            origin.strip()
+            for origin in self.CORS_ORIGINS.split(",")
+            if origin.strip()
+        ]
+
     @model_validator(mode="after")
-    def _validate_production_secrets(self) -> "Settings":
+    def validate_production(self) -> "Settings":
         if not self.is_production:
             return self
 
         if len(self.JWT_SECRET) < MIN_PRODUCTION_SECRET_LENGTH:
             raise ValueError(
-                "JWT_SECRET looks like a placeholder value "
-                f"(must be at least {MIN_PRODUCTION_SECRET_LENGTH} "
-                "characters) and must be set to a real secret "
-                "in production."
+                "JWT_SECRET must be at least "
+                f"{MIN_PRODUCTION_SECRET_LENGTH} characters in production."
+            )
+
+        if self.JWT_SECRET == DEFAULT_JWT_SECRET:
+            raise ValueError(
+                "Default JWT_SECRET cannot be used in production."
             )
 
         if not self.ENCRYPTION_KEY:
             raise ValueError(
                 "ENCRYPTION_KEY must be set in production."
+            )
+
+        if not self.CORS_ORIGINS:
+            raise ValueError(
+                "CORS_ORIGINS must be configured in production."
             )
 
         return self

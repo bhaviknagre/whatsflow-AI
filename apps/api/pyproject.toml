@@ -15,7 +15,6 @@ dependencies = [
     "pydantic-settings>=2.14.2",
     "pyjwt>=2.13.0",
     "python-dotenv>=1.2.2",
-    "python-jose[cryptography]>=3.5.0",
     "python-multipart>=0.0.32",
     "redis>=8.1.0",
     "sqlalchemy>=2.0.51",

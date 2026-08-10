@@ -1,34 +1,64 @@
-# NOTE: docker-compose.yml publishes postgres (5432), redis (6379), and
-# minio (9000/9001) to the host for local dev convenience. Compose does
-# not let an override file remove ports published by the base file, so
-# this override cannot close them — verified, not assumed. In production,
-# block these ports at the firewall/security-group level; only the api
-# service (8000) should be reachable.
-
 services:
-
   postgres:
     environment:
       POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB is required}
       POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER is required}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+    restart: unless-stopped
 
+  redis:
+    restart: unless-stopped
 
   minio:
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER:?MINIO_ROOT_USER is required}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?MINIO_ROOT_PASSWORD is required}
-
+    restart: unless-stopped
 
   api:
     environment:
       APP_ENV: production
       DEBUG: "false"
 
-      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:?POSTGRES_USER is required}:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@postgres:5432/${POSTGRES_DB:?POSTGRES_DB is required}
+      DATABASE_URL: >-
+        postgresql+psycopg://${POSTGRES_USER:?POSTGRES_USER is required}:
+        ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}@postgres:5432/
+        ${POSTGRES_DB:?POSTGRES_DB is required}
 
-      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required (32+ random chars) in production}
-      ENCRYPTION_KEY: ${ENCRYPTION_KEY:?ENCRYPTION_KEY is required in production}
+      REDIS_URL: redis://redis:6379/0
 
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:?ENCRYPTION_KEY is required}
+
+      CORS_ORIGINS: ${CORS_ORIGINS:?CORS_ORIGINS is required}
+
+      ENABLE_API_DOCS: ${ENABLE_API_DOCS:-false}
+
+      META_APP_ID: ${META_APP_ID:-}
+      META_APP_SECRET: ${META_APP_SECRET:-}
+      META_GRAPH_API_VERSION: ${META_GRAPH_API_VERSION:-v23.0}
+      META_WEBHOOK_VERIFY_TOKEN: ${META_WEBHOOK_VERIFY_TOKEN:-}
+      META_WEBHOOK_APP_SECRET: ${META_WEBHOOK_APP_SECRET:-}
+      META_EMBEDDED_SIGNUP_CONFIG_ID: ${META_EMBEDDED_SIGNUP_CONFIG_ID:-}
+      META_REDIRECT_URI: ${META_REDIRECT_URI:-}
+
+      MINIO_ENDPOINT: minio:9000
       MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:?MINIO_ROOT_USER is required}
       MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:?MINIO_ROOT_PASSWORD is required}
+      MINIO_BUCKET: ${MINIO_BUCKET:-whatsflow}
+
+    restart: unless-stopped
+
+    security_opt:
+      - no-new-privileges:true
+
+    read_only: true
+
+    tmpfs:
+      - /tmp
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
