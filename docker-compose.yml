@@ -1,10 +1,9 @@
-version: "3.9"
-
 services:
 
   postgres:
     image: postgres:17
-    restart: always
+    restart: unless-stopped
+
     environment:
       POSTGRES_DB: whatsflow
       POSTGRES_USER: postgres
@@ -16,13 +15,31 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d whatsflow"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+
   redis:
-    image: redis:7
+    image: redis:7-alpine
+    restart: unless-stopped
+
     ports:
       - "6379:6379"
 
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+
   minio:
     image: minio/minio
+    restart: unless-stopped
+
     command: server /data --console-address ":9001"
 
     environment:
@@ -35,6 +52,50 @@ services:
 
     volumes:
       - minio_data:/data
+
+
+  api:
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile
+
+    restart: unless-stopped
+
+    environment:
+      APP_ENV: development
+      DEBUG: "true"
+
+      DATABASE_URL: postgresql+psycopg://postgres:postgres@postgres:5432/whatsflow
+
+      REDIS_URL: redis://redis:6379/0
+
+      JWT_SECRET: change-this-development-secret
+
+      META_APP_ID: ${META_APP_ID:-}
+      META_APP_SECRET: ${META_APP_SECRET:-}
+      META_GRAPH_API_VERSION: ${META_GRAPH_API_VERSION:-v23.0}
+      META_WEBHOOK_VERIFY_TOKEN: ${META_WEBHOOK_VERIFY_TOKEN:-}
+      META_WEBHOOK_APP_SECRET: ${META_WEBHOOK_APP_SECRET:-}
+
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:-}
+
+      OPENAI_API_KEY: ""
+
+      MINIO_ENDPOINT: minio:9000
+      MINIO_ACCESS_KEY: minio
+      MINIO_SECRET_KEY: minio123
+      MINIO_BUCKET: whatsflow
+
+    ports:
+      - "8000:8000"
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+      redis:
+        condition: service_healthy
+
 
 volumes:
 
